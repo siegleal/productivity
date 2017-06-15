@@ -1,0 +1,28 @@
+# ~/.bashrc.aliases: included by ~/.bashrc to make life easier
+# General aliases
+alias edtalias="vim ~/.bashrc.aliases"
+alias edtbashrc="vim ~/.bashrc"
+alias edtfuncs="vim ~/.bashrc.functions"
+alias restnow="sudo shutdown -r now"
+alias srcbashrc="source ~/.bashrc"
+alias upgrade="sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get autoremove"
+
+# LS(1) aliases
+alias ll="ls -l"
+alias la="ls -a"
+alias lla="ls -la"
+
+# Screen aliases
+alias sls="screen -ls"
+alias sra="screen -d -RR"
+
+alias cdmain='cd ~/blt/app/main/core/'
+alias cdpatch='cd ~/blt/app/208/patch/core/'
+alias cdconfig='cd config/settings/overrides'
+alias cdgmail='cd ~/lightning-for-gmail/'
+alias cdgcal='cd ~/git/lightning-for-gcal/'
+alias cdadm='cd ~/blt/adm/gus/gus2.0/thirdparty/package/adm/'
+
+alias mychanges='p4 changes -c asiegle-wsl-blt'
+alias intellij='sh /opt/idea-IU/bin/idea.sh &> /dev/null &'
+alias appstart='blt --start | grep "A P P"'

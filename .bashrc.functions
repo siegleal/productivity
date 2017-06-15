@@ -1,0 +1,153 @@
+## ~/.bashrc.functions: included by ~/.bashrc to make life easier
+## General functions
+
+# FINDG
+# function to find files matching a particular pattern and then
+# grep through them for another pattern
+# -p (optional) instructs find to search by path instead of name
+# $1 (mandatory) specifies a pattern of filename in which to search
+# $2 (mandatory) specifies a patter for which to grep
+findg() {
+  local OPTIND
+
+  BY_PATH=0
+  while getopts "p" OPTION; do
+    case "$OPTION" in
+      p) BY_PATH=1;;
+      ?) return;;
+    esac
+  done
+  shift $((OPTIND-1))
+
+  if [[ -z $1 ]]; then
+    echo "Must provide a pattern of file in which to search"
+    return
+  fi
+  if [[ -z $2 ]]; then
+    echo "Must provide a pattern for which to grep"
+    return
+  fi
+
+  FIND_BY="-name"
+  if [ $BY_PATH -eq 1 ]; then
+    FIND_BY="-path"
+  fi
+  find -L . $FIND_BY "$1" | xargs grep -rn "$2"
+}
+
+# LOG
+# function to execute a program and log all output to a file
+# -p (optional) prints the output to the terminal as well
+# $1 (mandatory) specifies an executable to run
+log() {
+  local OPTIND
+
+  PRINT=0
+
+  while getopts "p" OPTION; do
+    case "$OPTION" in
+      p) PRINT=1;;
+      ?) return;;
+    esac
+  done
+  shift $((OPTIND-1))
+
+  if [[ -z $1 ]]; then
+    echo "Must provide an executable to run"
+    return
+  fi
+  SCRIPT_PATH=$(readlink -f $1)
+  if [[ -z $SCRIPT_PATH || ! -e $SCRIPT_PATH || ! -x $SCRIPT_PATH ]]; then
+    echo "Must provide a valid executable"
+  else
+    LOG_FILE="$(basename ${SCRIPT_PATH%.*}).log.$(date +%Y%m%dT%H%M%S)"
+    PRINT_STR=$([ "$PRINT" == 1 ] && echo "| tee" || echo ">")
+    eval "$SCRIPT_PATH 2>&1 $PRINT_STR $LOG_FILE"
+    echo "'$SCRIPT_PATH' output logged to '$LOG_FILE'"
+  fi
+}
+
+# NUMF
+# function to count the number of files in a directory
+# -a (optional) includes hidden files in the count
+# $1 (optional) specifies a directory, the default is the current directory
+numf() {
+  local OPTIND
+
+  ALL=0
+
+  while getopts "a" OPTION; do
+    case $OPTION in
+      a) ALL=1;;
+      ?) return;;
+    esac
+  done
+  shift $((OPTIND-1))
+
+  LS_ARGS="."
+  SUBTRACT=0
+  if [[ ! -z $1 ]]; then
+    DIR_PATH=$(readlink -f $1)
+    if [[ ! -d $DIR_PATH ]]; then
+      echo "'$DIR_PATH' is not a valid directory."
+      return;
+    fi
+    LS_ARGS=$DIR_PATH
+  fi
+  if [ $ALL -eq 1 ]; then
+    LS_ARGS="-a $LS_ARGS"
+    # Subtract 2 from the final for . and .. links
+    SUBTRACT=2
+  fi
+
+  NUM_FILES=`ls $LS_ARGS | wc -l`
+  echo "Found $(($NUM_FILES - $SUBTRACT)) file(s)"
+}
+
+# PSAG
+# function to grep through p output
+# -k (optional) kills any matching processes
+# $1 (mandatory) a string for which to grep
+psag() {
+  local OPTIND
+
+  KILL=0
+
+  while getopts "k" OPTION; do
+    case "$OPTION" in
+      k) KILL=1;;
+      ?) return;;
+    esac
+  done
+  shift $((OPTIND-1))
+
+  if [[ -z $1 ]]; then
+    echo "Must provide something to grep for"
+    return
+  fi
+  QUERY=$1
+  CMD="ps aux | grep '$QUERY'"
+  if [ $KILL -eq 1 ]; then
+    CMD="$CMD | awk {'print \$2'} | sudo xargs kill"
+  fi
+  eval "$CMD"
+}
+
+# U
+# function to travel up the directory chain
+# $1 (optional) the number of times to go up, defaults to 1
+u() {
+  N=1
+  if [[ ! -z $1 ]]; then
+    if [[ $1 =~ ^[0-9]+$ ]]; then
+      N=$1
+    else
+      echo "u only takes numbers as arguments"
+      return
+    fi
+  fi
+  while [ $(( N -= 1 )) -ge 0 ]; do
+    cd ..
+  done
+}
+
